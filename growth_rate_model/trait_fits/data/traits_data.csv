@@ -1,0 +1,30 @@
+parameter;species;temperature;trait;unit;sourcepaper;remarks;included
+hatching_success;B.truncatus;23;0.765;;Leopard_and_Isseroff_2009;;
+hatching_success;B.tropicus;30;0.275;;Prinsloo_and_van_Eeden_1969;;
+hatching_success;B.tropicus;27;0.723;;Prinsloo_and_van_Eeden_1969;;
+hatching_success;B.tropicus;25;0.893;;Prinsloo_and_van_Eeden_1969;;
+hatching_success;B.tropicus;21;0.743;;Prinsloo_and_van_Eeden_1969;;
+hatching_success;B.tropicus;18;0.844;;Prinsloo_and_van_Eeden_1969;;
+hatching_success;B.tropicus;15;0.676;;Prinsloo_and_van_Eeden_1969;;
+hatching_success;B.truncatus;23.5;0.9;;Tolba_and_Awad_1995;22-25;
+hatching_success;B.truncatus;23.5;0.6;;Tolba_and_Awad_1995;22-25;no
+hatching_success;B.truncatus;23.5;0.4;;Tolba_and_Awad_1995;22-25;no
+hatching_success;B.truncatus;23.5;0.78;;Tolba_and_Awad_1995;22-25;no
+hatching_time;B.truncatus;29;6;days;Klummpp_et_al.,_1985;;
+hatching_time;B.truncatus;32;5;days;McCullough_1962;;
+hatching_time;B.truncatus;22;11;days;McCullough_1962;;
+hatching_time;B.truncatus;22.5;8;days;Najarian_1961;20-25;
+hatching_time;B.truncatus;17.75;18;days;Najarian_1961;15,5-20 degrees, 17-19 days;
+hatching_time;B.truncatus;17.75;14.5;days;Najarian_1961;15,5-20 degrees, 13-16days;
+hatching_time;B.truncatus;23.5;13.5;days;Watson_1985;22-25 degrees, 12_to_15 days;
+maturation_time;B.truncatus;29;4.428571429;weeks;Klummpp_et_al.,_1985;;
+maturation_time;B.truncatus;22.5;7;weeks;Najarian_1961;20-25;
+maturation_time;B.truncatus;23.5;11;weeks;Watson_1985;22-25, 2-3 months;
+maturation_time;B.truncatus;10;20;weeks;El-Emam_and_Madsen_1982;No egg laying after 16 weeks;
+maturation_time;B.truncatus;18;8;weeks;El-Emam_and_Madsen_1982;Including 1 week before experiment start;
+maturation_time;B.truncatus;26;6;weeks;El-Emam_and_Madsen_1982;Including 1 week before experiment start;
+maturation_time;B.truncatus;28;4;weeks;El-Emam_and_Madsen_1982;Including 1 week before experiment start;
+maturation_time;B.truncatus;26;5.92142857142857;weeks;Diakite_2023_n;;
+maturation_time;B.truncatus;26;5.98428571428571;weeks;Diakite_2023_s;;
+hatching_success;B.truncatus;26;0.74;;Diakite_2023_n;;
+hatching_success;B.truncatus;26;0.73;;Diakite_2023_s;;

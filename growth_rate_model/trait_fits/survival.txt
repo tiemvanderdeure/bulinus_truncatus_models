@@ -1,0 +1,44 @@
+model{
+    
+    ## Priors
+    lf_max_mu ~ dunif(1, 10)
+    T0_mu ~ dunif(0, 20)
+    Tm_mu ~ dunif(28, 45)
+    q_mu <- lf_max_mu / pow((Tm_mu - T0_mu) / 2, 2)
+
+    lf_max_sigma ~ dunif(0,1)
+    T0_sigma ~ dunif(0,5)
+    Tm_sigma ~ dunif(0,5)
+
+    lf_max_tau <- 1 / (lf_max_sigma * lf_max_sigma)
+    T0_tau <- 1 / (T0_sigma * T0_sigma)
+    Tm_tau <- 1 / (Tm_sigma * Tm_sigma)
+
+    temp_sigma ~ dunif(0, 2)
+    temp_tau <- 1 / (temp_sigma * temp_sigma)
+    
+    ## Sampling
+    for(i in 1:N_obs_raw){
+        survived[i] ~ dinterval(weeks_survived[i], exp_length[i])
+        weeks_survived[i] ~ dnbinom(weekly_death_rate[exp_index[i]], 1)
+    }
+
+    for (i in (N_obs_raw+1):N_obs_total){
+        survival_prob[i] <- pow(1 - weekly_death_rate[exp_index[i]], exp_length[i])
+        survived[i] ~ dbin(survival_prob[i], sample_size[i])
+    }
+
+    for(i in 1:N_groups){
+	    log_lifespan_mu[i] <- q[pop_index[i]] * (temp[i] - T0[pop_index[i]]) * (Tm[pop_index[i]] - temp[i])
+        log_lifespan[i] ~ dnorm(log_lifespan_mu[i], temp_tau)
+        weekly_death_rate[i] <- 1 - exp(-1 / exp(log_lifespan[i]))
+    }
+
+    for(i in 1:N_populations){
+        lf_max[i] ~ dnorm(lf_max_mu, lf_max_tau)
+        T0[i] ~ dnorm(T0_mu, T0_tau)
+        Tm[i] ~ dnorm(Tm_mu, Tm_tau)
+        q[i] <- lf_max[i] / pow((Tm[i] - T0[i]) / 2, 2) # q corresponding to maximum lifespan
+    }
+} # close model
+    

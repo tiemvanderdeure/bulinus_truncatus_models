@@ -1,0 +1,15 @@
+model{
+    
+    ## Priors
+    T0 ~ dunif(priors[1,1], priors[1,2])
+    GDD ~ dunif(priors[2,1], priors[2,2])
+    sigma ~ dunif(0, 10)
+    tau <- 1 / (sigma * sigma)
+    
+    ## Likelihood
+    for(i in 1:N_obs){
+    trait_mu[i] <- ifelse(T0 <= temp[i], GDD / (temp[i] - T0), 10000000)
+    trait[i] ~ dnorm(trait_mu[i], tau)
+    }
+    
+} # close model
