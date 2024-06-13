@@ -3,3 +3,5 @@
 *.img
 *.png
 *.pdf
+/correlative_model/outputs/*
+/correlative_model/env_layers/*

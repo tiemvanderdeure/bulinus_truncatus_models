@@ -1,0 +1,13 @@
+model{
+    
+    ## Priors
+    q ~ dunif(priors[1,1], priors[1,2])
+    sigma ~ dunif(priors[2,1], priors[2,2])
+    tau <- 1 / (sigma * sigma)
+    
+    ## Likelihood
+    for(i in 1:N_obs){
+        trait[i] ~ dnorm(q, tau)
+    }
+    
+} # close model
