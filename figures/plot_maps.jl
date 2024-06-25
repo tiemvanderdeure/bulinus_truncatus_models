@@ -33,10 +33,10 @@ median_r0_current = Raster(mech_dir * "current/median.tif")
 mech_cutoff = 0. # cutoff value for presence/absence maps
 
 ########## Correlative output
-cor_median_set1 = Raster("$cor_dir/Fig1A_median_set1.tif") ./ 1000
-cor_median_set2 = Raster("$cor_dir/Fig1B_median_set2.tif") ./ 1000
+cor_mean_set1 = Raster("$cor_dir/current_set1.tif")[Band(1)] ./ 1000
+cor_mean_set2 = Raster("$cor_dir/current_set2.tif") ./ 1000
 
-cor_futures = [Raster("$cor_dir/Fig3_$(yr)$(ssp)_EMmedian.tif") ./ 1000 for yr in [50, 90], ssp in [126, 370]]
+cor_futures = [Raster("$cor_dir/average_$(yr)$(ssp).tif") ./ 1000 for yr in [50, 90], ssp in [126, 370]]
 
 cor_gcm_files = [readdir("$cor_dir/by_gcm/$(yr)$(ssp)"; join = true) for yr in [50, 90], ssp in [126, 370]]
 cor_by_gcm = broadcast(cor_gcm_files) do files
@@ -50,7 +50,7 @@ cor_std_gcm = [std(c, dims = 3)[:, :, 1] for c in cor_by_gcm]
 
 # calculate cut-off value
 presences = CSV.read("occurrence_data/thinned_presences.csv", DataFrame)
-suitability_presences = reduce(vcat, [collect(cor_median_set2[X = Near(p.x), Y = Near(p.y)]) for p in eachrow(presences)])
+suitability_presences = reduce(vcat, [collect(cor_mean_set2[X = Near(p.x), Y = Near(p.y)]) for p in eachrow(presences)])
 cor_cutoff = quantile(suitability_presences, 0.1) # cutoff value for presence/absence maps is 10th percentile
 
 ##### haematobium data
@@ -73,7 +73,7 @@ begin
     for axis in axes hidedecorations!(axis); hidespines!(axis) end
 
     plot!(axes[1], median_r0_current, colormap = cmap, colorrange = (0,1))
-    plot!(axes[2], cor_median_set2, colormap = cmap, colorrange = (0,1))
+    plot!(axes[2], cor_mean_set2, colormap = cmap, colorrange = (0,1))
     plot!(axes[3], median_r0_current, colormap = cgrad([:lightgrey, :lightgrey])) # grey background where there is no data
     plot!(axes[3], haem_med, colormap = cmap, nan_color = :transparent, colorrange = (0,0.5), highclip = :darkred)
 
@@ -158,7 +158,7 @@ end
 begin
     # Current
     mech_binary = median_r0_current .> mech_cutoff
-    cor_binary = cor_median_set2 .> cor_cutoff
+    cor_binary = cor_mean_set2 .> cor_cutoff
     haem_binary = haem_med .> 0.1
     nas = isnan.(median_r0_current)
 
@@ -267,7 +267,7 @@ end
 
 ####### Figure S8 - EMca scores correlative
 begin
-    EMcas = [Raster("$cor_dir/SF8_EMca_set$i.tif") for i in 1:2]
+    EMcas = [Raster("$cor_dir/EMca_set$i.tif") for i in 1:2]
 
     f = Figure(size = (1000, 600), fontsize = 20, backgroundcolor = :transparent)
 
