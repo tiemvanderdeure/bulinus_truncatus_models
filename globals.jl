@@ -3,7 +3,7 @@ global SSPs = ["ssp126", "ssp370"]
 global time_periods = ["2041-2060", "2081-2100"]
 
 global datadir = "." ### change to define a separate path to save data
-global mech_dir = "$datadir/model_run_dec16/"
+global mech_dir = "$datadir/mechanstic_model/outputs"
 global cor_dir = "$datadir/correlative_model/outputs"
 
 global quantiles = [0.025, 0.5, 0.975]

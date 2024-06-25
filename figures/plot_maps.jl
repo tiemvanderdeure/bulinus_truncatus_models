@@ -33,8 +33,7 @@ median_r0_current = Raster(mech_dir * "current/median.tif")
 mech_cutoff = 0. # cutoff value for presence/absence maps
 
 ########## Correlative output
-cor_mean_set1 = Raster("$cor_dir/current_set1.tif")[Band(1)] ./ 1000
-cor_mean_set2 = Raster("$cor_dir/current_set2.tif") ./ 1000
+cor_mean_set2 = replace_missing(Raster("$cor_dir/current_set2.tif")[Band(1)], NaN32) ./ 1000
 
 cor_futures = [Raster("$cor_dir/average_$(yr)$(ssp).tif") ./ 1000 for yr in [50, 90], ssp in [126, 370]]
 
@@ -67,9 +66,9 @@ begin
     fsize = 100
     fsize_labels = fsize * 0.8
 
-    f = Figure(size = (6000, 2200), backgroundcolor = :transparent, fontsize = fsize)
+    f = Figure(size = (6000, 2200), fontsize = fsize)
 
-    axes = [Axis(f[1, i], limits = limits, backgroundcolor = :transparent) for i in 1:3]
+    axes = [Axis(f[1, i], limits = limits) for i in 1:3]
     for axis in axes hidedecorations!(axis); hidespines!(axis) end
 
     plot!(axes[1], median_r0_current, colormap = cmap, colorrange = (0,1))
@@ -80,7 +79,7 @@ begin
     for (i, text) in enumerate(["Mechanistic model", "Correlative model", "S. haematobium prevalence"])
         Label(f[1,i, Top()], text =text)
     end
-    for (i, lab) in enumerate(["A", "B", "C"])
+    for (i, lab) in enumerate(["(a)", "(b)", "(c)"])
         Label(f[1,i], text =lab, font = :bold, tellheight = false, tellwidth = false, halign = :left, valign = :top)
     end
 
@@ -112,49 +111,10 @@ begin
 
     # Add a title
     Label(f[0,1:3], text = "B. truncatus suitability and S. haematobium prevalence", tellwidth = false, font = :bold)
-    save("figures/figure_03.png", f)
+    save("figures/figure_03.png", f, px_per_unit = 1)
 end
 
-####### Figure 4 - Future suitability for mechanistic and correlative model in columns
-begin
-    f = Figure(
-        colormap = cmap, 
-        fontsize = 25,
-        size = (800, 1200),
-        backgroundcolor = :transparent)
-    maps = f[1,1] = GridLayout()
-    axes = [Axis(maps[r,c], limits = limits, backgroundcolor = :transparent) for r in 1:4, c in 1:2]
-    for ax in axes hidedecorations!(ax); hidespines!(ax) end
-
-    for t in 1:2, s in 1:2
-        row = t+(s-1)*2
-        plot!(axes[row, 1], cor_futures[t, s])
-        plot!(axes[row, 2], median_r0[t, s], colorrange = (0,1))
-
-        Box(maps[row,0], color = (:lightgrey, 0.5), strokevisible = false)
-
-        Label(
-            maps[row,0], time_periods[t]; 
-            rotation = pi/2, font = :bold, padding = (0,0,0,0), tellheight = false)
-    end
-
-    Label(maps[1,1,Top()], "Correlative"; font = :bold, padding = (0,0,5,0))
-    Label(maps[1,2,Top()], "Mechanistic"; font = :bold, padding = (0,0,5,0))
-
-    for i in 1:2
-        r = i*2-1:i*2
-        Box(maps[r,-1], color = (:lightgrey, 0.5), strokevisible = false)
-        Label(maps[r,-1], SSPs[i]; rotation = pi/2, font = :bold)
-    end
-
-    colgap!(maps, 10); rowgap!(maps, 10)
-
-    cb = Colorbar(f[1,2], colorrange = (0,1), label = "Suitability")
-
-    save("figures/figure_04.png", f)
-end
-
-##### Figure 5 - correlative and mechanistic over each other - current and future
+##### Figure 4 - correlative and mechanistic over each other - current and future
 begin
     # Current
     mech_binary = median_r0_current .> mech_cutoff
@@ -188,47 +148,24 @@ begin
     current_map = pick_col(cor_binary, mech_binary, nas)
     future_maps = [pick_col(cor, mech, nas) for (mech, cor) in zip(mech_future_binary, cor_future_binary)]
 
-    #### Suitability area calculations
-    suitable_binary = mech_binary .&& cor_binary
-    future_suitable = [mech .&& cor for (mech, cor) in zip(mech_future_binary, cor_future_binary)]
-    #haem_binary = replace_missing(rasterize(haem_10; to = mech_binary, fill = 1), 0)
-    cs = cellsize(suitable_binary)
-
-    haem_rs = resample(haem_med, to = suitable_binary)
-    haem_rs_binary = haem_rs .> 0.1
-    suitable_size = sum(suitable_binary .* cs)
-    round(suitable_size / 1e6; digits = 1)
-
-    f_suitable_size = [sum(f_s .* cs) for f_s in future_suitable]
-    round(f_suitable_size[2,2] / 1e6; digits = 1)
-
-    pct_change_in_suitable_area = round.(Int64, (f_suitable_size ./ suitable_size .- 1) .* 100)
-
-
-    sum((future_suitable[2,2] .&& suitable_binary) .* cs)
-    sum((future_suitable[2,2] .&& .~suitable_binary) .* cs)
-    sum((.~future_suitable[2,2] .&& suitable_binary) .* cs)
-
-    sum((suitable_binary .&& haem_rs_binary) .* cs) # currently suitable with high haem
-    # share of currently suitable with high haem that won't be suitable anymore under SSP370
-    sum((.~future_suitable[2,2] .&& suitable_binary .&& haem_rs_binary) .* cs) / sum((suitable_binary .&& haem_rs_binary) .* cs)
-
     #### Make figure
-    f = Figure(size =  (4800, 3200), fontsize = 88, backgroundcolor = :transparent)
+    f = Figure(size =  (4800, 3200), fontsize = 88)
     f_current = f[1,1]
     f_future = f[1,2] = GridLayout()
 
-    ax_current = Axis(f_current[1,1], limits = limits, backgroundcolor = :transparent)
-    axes_future = [Axis(f_future[i, j], limits = limits, backgroundcolor = :transparent) for i in 1:2, j in 1:2]
+    ax_current = Axis(f_current[1,1], limits = limits)
+    axes_future = [Axis(f_future[i, j], limits = limits) for i in 1:2, j in 1:2]
 
     heatmap!(ax_current, lookup(dims(current_map, (X, Y)))..., current_map)
     heatmap!(ax_current, haem_binary, colormap = cgrad([:transparent, haem_col]), colorrange = (0,1))
 
+    letters = 'b':'e'
     for i in 1:2, j in 1:2
         heatmap!(axes_future[j,i], lookup(dims(future_maps[i,j], (X, Y)))..., future_maps[i,j])
         heatmap!(axes_future[j,i], haem_binary, colormap = cgrad([:transparent, haem_col]), colorrange = (0,1))
-    #  Makie.poly!(axes_future[j,i], borders_shape, color = :transparent, strokecolor = :black, strokewidth = 0.1, overdraw = true)
         text!(axes_future[j,i], -10, -10; text = "+$(pct_change_in_suitable_area[i,j])%", color = both_col, font = :bold)
+        l = letters[i+2*(j-1)]
+        Label(f_future[j,i], text = "($l)", font = :bold, tellheight = false, tellwidth = false, halign = :left, valign = :top, padding = (20, 0,0,0))
     end
 
     # Legend
@@ -243,21 +180,87 @@ begin
 
     ## Labels
     Label(f_current[1, 1, Top()], text = "Current", font = :bold)
+    Label(f_current, text = "(a)", font = :bold, tellheight = false, tellwidth = false, 
+        halign = :left, valign = :top, padding = (40, 0,0,0))
 
     for (i, tp) in enumerate(time_periods)
         Label(f_future[1, i, Top()], text = tp, font = :bold)
     end
 
     for (i, ssp) in enumerate(SSPs)
-        Label(f_future[i, 2, Right()], text = ssp, font = :bold, rotation = -pi/2)
+        Label(f_future[i, 2, Right()], text = uppercase(ssp), font = :bold, rotation = -pi/2)
     end
+
 
     for ax in [ax_current; axes_future] hidedecorations!(ax); hidespines!(ax) end
 
     colgap!(f.layout, 0), rowgap!(f.layout, 10)
     colgap!(f_future, 0), rowgap!(f_future, 10)
 
-    save("figures/figure_05.png", f)
+    save("figures/figure_04.png", f, px_per_unit = 1)
+end
+
+#### Suitability area calculations (used in-text)
+suitable_binary = mech_binary .&& cor_binary
+future_suitable = [mech .&& cor for (mech, cor) in zip(mech_future_binary, cor_future_binary)]
+#haem_binary = replace_missing(rasterize(haem_10; to = mech_binary, fill = 1), 0)
+cs = cellsize(suitable_binary)
+
+haem_rs = resample(haem_med, to = suitable_binary)
+haem_rs_binary = haem_rs .> 0.1
+suitable_size = sum(suitable_binary .* cs)
+round(suitable_size / 1e6; digits = 1)
+
+f_suitable_size = [sum(f_s .* cs) for f_s in future_suitable]
+round(f_suitable_size[2,2] / 1e6; digits = 1)
+
+pct_change_in_suitable_area = round.(Int64, (f_suitable_size ./ suitable_size .- 1) .* 100)
+
+sum((future_suitable[2,2] .&& suitable_binary) .* cs)
+sum((future_suitable[2,2] .&& .~suitable_binary) .* cs)
+sum((.~future_suitable[2,2] .&& suitable_binary) .* cs)
+
+sum((suitable_binary .&& haem_rs_binary) .* cs) # currently suitable with high haem
+# share of currently suitable with high haem that won't be suitable anymore under SSP370
+sum((.~future_suitable[2,2] .&& suitable_binary .&& haem_rs_binary) .* cs) / sum((suitable_binary .&& haem_rs_binary) .* cs)
+
+
+####### Figure 5 - Future suitability for mechanistic and correlative model in columns
+begin
+    f = Figure(
+        colormap = cmap, 
+        fontsize = 25,
+        size = (800, 1200))
+    maps = f[1,1] = GridLayout()
+    axes = [Axis(maps[r,c], limits = limits) for r in 1:4, c in 1:2]
+    for ax in axes hidedecorations!(ax); hidespines!(ax) end
+
+    for t in 1:2, s in 1:2
+        row = t+(s-1)*2
+        plot!(axes[row, 1], cor_futures[t, s])
+        plot!(axes[row, 2], median_r0[t, s], colorrange = (0,1))
+
+        Box(maps[row,0], color = (:lightgrey, 0.5), strokevisible = false)
+
+        Label(
+            maps[row,0], time_periods[t]; 
+            rotation = pi/2, font = :bold, padding = (0,0,0,0), tellheight = false)
+    end
+
+    Label(maps[1,1,Top()], "Correlative"; font = :bold, padding = (0,0,5,0))
+    Label(maps[1,2,Top()], "Mechanistic"; font = :bold, padding = (0,0,5,0))
+
+    for i in 1:2
+        r = i*2-1:i*2
+        Box(maps[r,-1], color = (:lightgrey, 0.5), strokevisible = false)
+        Label(maps[r,-1], uppercase(SSPs[i]); rotation = pi/2, font = :bold)
+    end
+
+    colgap!(maps, 10); rowgap!(maps, 10)
+
+    cb = Colorbar(f[1,2], colorrange = (0,1), label = "Suitability")
+
+    save("figures/figure_05.png", f, px_per_unit = 3)
 end
 
 

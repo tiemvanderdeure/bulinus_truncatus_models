@@ -6,10 +6,10 @@
 using CairoMakie, StatsBase
 
 # Import trait data
-include("../growth_rate_model/traits.jl")
+include("../mechanistic_model/traits.jl")
 
 # Include the model for the final pop_growth_rate_normalized
-include("../growth_rate_model/model.jl")
+include("../mechanistic_model/model.jl")
 
 ##########################
 ## First calculate life history traits at each temperature
@@ -53,36 +53,38 @@ pop_growth_rate_normalized = max.(pop_growth_rate ./ maximum(pop_growth_rate, di
 # Get 2.5%, 50%, and 97.5% quantile for plots
 posteriors_to_plot = [hatching_success, hatching_time, mat_time, lifespan, ELR, pop_growth_rate_normalized]
 quantiles_to_plot = [hcat(quantile.(eachrow(posterior), [[0.025, 0.5, 0.975]])...) for posterior in posteriors_to_plot]
-
+means = hcat(map(mean, eachcol.(posteriors_to_plot))...)
 ########################
 ####### Plotting #######
 ########################
 
 # parameters for each plot
 plot_titles = ["Hatching success", "Hatching time", "Maturation time", "Lifespan", "Egg-laying rate", "Population growth"]
+plot_letters = ["($a)" for a in 'a':'f']
 ylabels = ["Rate", "Time (days)", "Time (weeks)", "Time (weeks)", "Eggs/week", "Relative rate"]
 ylimits = [1, 40, 25, nothing, nothing, 1] # upper limits for y axis
 
 # Import data points for each plot
-data_points = CSV.read("growth_rate_model/trait_fits/data/data_points_plot.csv", DataFrame) # these are generated in R
+data_points = CSV.read("mechanistic_model/trait_fits/data/data_points_plot.csv", DataFrame) # these are generated in R
 data_to_plot = [filter(x -> x.parameter == par, data_points) for par in ["hatching_success", "hatching_time", "maturation_time", "lifespan", "eggs"]]
 
 # Make the plot
-f = Figure(size = (1000, 600), fontsize = 16, grid = false, backgroundcolor = :transparent) 
+f = Figure(size = (1000, 600), fontsize = 16, grid = false) 
 
-axes = Axis[]
 indices = [(row,col) for col in 1:3, row in 1:2]
 
 # Loop through plots
-for (i, data) in (enumerate(quantiles_to_plot))
-    ax = Axis(f[indices[i]...],
+axes = map(enumerate(quantiles_to_plot)) do (i, data)
+    gridposition = f[indices[i]...]
+    ax = Axis(gridposition,
         title = plot_titles[i],
         xlabel = "Temperature (°C)",
         ylabel = ylabels[i],
         limits = (5, 40, 0, ylimits[i]),
-        ygridvisible = false, xgridvisible = false, 
-        backgroundcolor = :transparent
+        ygridvisible = false, xgridvisible = false,
     )
+    Label(gridposition, plot_letters[i], font = :bold, tellheight = false, tellwidth = false, halign = :left, valign = 1.12) 
+
 
     lines!(ax, temperatures, data[2,:], color = :black)
 
@@ -95,16 +97,17 @@ for (i, data) in (enumerate(quantiles_to_plot))
             marker = :circle,
         )
     end
-    append!(axes, [ax])
+    return ax
 end
+
 
 # Lifespan on pseudolog scale
 axes[4].yscale = Makie.pseudolog10
 axes[4].yticks = [0, 1, 3, 10, 30, 100, 300]
 
 ## Save the output
-save("figures/figure_03.pdf", f)
-save("figures/figure_03.png", f, px_per_unit = 10)
+save("figures/figure_02.pdf", f)
+save("figures/figure_02.png", f, px_per_unit = 5)
 
 ##########################
 ## Find values mentioned in text
