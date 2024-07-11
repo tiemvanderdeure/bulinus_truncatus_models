@@ -16,7 +16,7 @@ data <- read.csv(path2allpresences, header=T)
 
 #plot the species presence points
 plot(data$x, data$y)
-data$Species<-"target_group"
+data$Species<-"B.truncatus"
 #thin the data
 thinned_data_full <- thin(loc.data=data, long.col = "x", lat.col="y", spec.col="Species", 
                           thin.par=5, reps=100, # thin.par specifies the minimum distance between points in kilometers
